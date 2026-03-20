@@ -109,11 +109,16 @@ def bounded_domain(func):
                 f"(depth={depth})"
             )
 
-        # ---- Input domain check ----
+        # ---- Input domain check (args + kwargs) ----
         for arg in args:
             ok, reason = is_in_domain(arg)
             if not ok:
                 report_violation(reason, func.__name__, "(input)")
+
+        for arg in kwargs.values():
+            ok, reason = is_in_domain(arg)
+            if not ok:
+                report_violation(reason, func.__name__, "(kwarg input)")
 
         result = None
         start = time.time()
@@ -125,6 +130,15 @@ def bounded_domain(func):
             ok, reason = is_in_domain(result)
             if not ok:
                 report_violation(reason, func.__name__, "(output)")
+
+        except Exception as e:
+            # ---- Execution failure signal ----
+            report_violation(
+                "execution_failure",
+                func.__name__,
+                f"({type(e).__name__}: {str(e)})"
+            )
+            raise
 
         finally:
             dec_depth()
@@ -148,6 +162,15 @@ def bounded_domain(func):
 # -------------------------------------------------------
 
 def wrap_module(module_dict):
+    """
+    Wraps top-level callables in a module dict (e.g., exec_globals).
+
+    Coverage limitations (declared):
+    - Does not wrap methods inside class definitions
+    - Does not wrap dynamically created functions after this call
+    - Does not wrap imported callables
+    Runtime coverage is at decorated boundaries only.
+    """
     for name, obj in list(module_dict.items()):
         if callable(obj) and not name.startswith("__"):
             try:
@@ -191,5 +214,10 @@ if __name__ == "__main__":
     def nested():
         return [[1, 2], [3, 4]]  # nested structure — triggers domain_expansion
 
+    @bounded_domain
+    def kwarg_test(x=None):
+        return x  # kwarg path now checked
+
     explode(10)
     nested()
+    kwarg_test(x=[1e10, 2e10])  # triggers magnitude_divergence via kwarg
