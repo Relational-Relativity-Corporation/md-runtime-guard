@@ -123,3 +123,63 @@ D-membership at the boundary of the full A → B → R → C composition.
 
 Framework: [ABRCE Invariant Relational Kernel](https://relationalrelativity.dev/)
 Org: [Relational-Relativity-Corporation](https://github.com/Relational-Relativity-Corporation)
+
+---
+
+## CLI usage
+
+Install locally:
+
+```
+pip install -e .
+```
+
+### Commands
+
+```
+md-guard run <file.py>
+md-guard check <file.py>
+```
+
+**`run`** — executes the file via `run_file()`, prints violations per `DomainConfig.MODE`:
+
+```
+md-guard run examples/my_module.py
+```
+
+**`check`** — executes in warn mode and returns an exit code:
+
+| Exit code | Meaning                        |
+|-----------|--------------------------------|
+| `0`       | No violations detected         |
+| `1`       | One or more violations found   |
+| `2`       | Enforcement exception raised   |
+
+```
+md-guard check examples/my_module.py
+echo $LASTEXITCODE
+```
+
+---
+
+## CI usage
+
+Add to any CI pipeline as a pre-execution gate:
+
+```yaml
+- name: Domain boundary check
+  run: |
+    pip install -e .
+    md-guard check src/my_module.py
+```
+
+A non-zero exit code fails the build.
+
+### Pre-commit hook
+
+```bash
+#!/bin/sh
+md-guard check "$1"
+```
+
+Place in `.git/hooks/pre-commit` and make executable.

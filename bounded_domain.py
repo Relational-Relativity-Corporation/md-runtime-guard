@@ -78,7 +78,22 @@ def is_in_domain(x):
 # Violation Handling
 # -------------------------------------------------------
 
+# -------------------------------------------------------
+# Violation Counter
+# -------------------------------------------------------
+
+VIOLATION_COUNT = 0
+
+
+def reset_violation_count():
+    global VIOLATION_COUNT
+    VIOLATION_COUNT = 0
+
+
 def report_violation(kind, func_name, detail=""):
+    global VIOLATION_COUNT
+    VIOLATION_COUNT += 1
+
     if DomainConfig.MODE == "silent":
         return
 
